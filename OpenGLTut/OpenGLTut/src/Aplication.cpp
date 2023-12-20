@@ -1,6 +1,48 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <vector>
+
+struct ShaderProgramSource {
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+
+static ShaderProgramSource ParseShader(const std::string& filepath) {
+    std::ifstream stream(filepath);
+
+    enum class ShaderType
+    {
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
+    };
+
+    std::string line;
+    ShaderType shaderType = ShaderType::NONE;
+    std::stringstream stringStream[2];
+
+    // Loop through each line of the file
+    while (getline(stream, line)) {
+        // Every line in the file gets stored to either the vertex or fragment string
+        // which will be used as the source strings in our shaders
+        if (line.find("#shader") != std::string::npos) {
+            if (line.find("vertex") != std::string::npos)
+                shaderType = ShaderType::VERTEX;
+            if (line.find("fragment") != std::string::npos)
+                shaderType = ShaderType::FRAGMENT;
+        }
+        else {
+            stringStream[(int)shaderType] << line << "\n";
+        }
+    }
+
+    return { 
+        stringStream[(int)ShaderType::VERTEX].str(), 
+        stringStream[(int)ShaderType::FRAGMENT].str() 
+    };
+}
 
 static unsigned int CompileShader(unsigned int type, const std::string& source) {
     // Creates a shader object
@@ -102,34 +144,11 @@ int main(void)
     // Reference: https://docs.gl/gl4/glVertexAttribPointer
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 
+    // if we use a relative path to a file like this, its relative to the working directory of the project
+    // that can be seen under project -> settings -> debugging -> Working Directory
+    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
-    //**************************************************************************************//
-    // The shader source code obviously will be read from a file and passed to the shader
-    // this approach highlights how the shader itself works
-
-    // Vertex shader runs for every vertex defined and outputs its final coordinates and to pass any data
-    // the fragment shader might need.
-    std::string vertexShader =
-        "#version 330 core \n"
-        "\n"
-        "layout(location = 0) in vec4 position;\n" // in -> input, vertex shader recieves an attribute we defined on the vertex
-        "\n"
-        "void main(){\n"
-        "   gl_Position = position;\n" // vertex shader assignes a gl_Position to every vertex
-        "}\n";
-
-    // The output from the vertex shader is interpolated, and for every pixel thats covered with a primitive
-    // Fragment shader runs its source code and decides that pixels colour
-    std::string fragmentShader =
-        "#version 330 core \n"
-        "\n"
-        "layout(location = 0) out vec4 color;\n" // out -> mandatory output of the fragment shader, a final color of the pixel
-        "\n"
-        "void main(){\n"
-        "   color = vec4(1.0, 0.0, 0.0, 1.0);\n"
-        "}\n";
-
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
 
     //**************************************************************************************//
