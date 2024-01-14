@@ -6,6 +6,27 @@
 #include <sstream>
 #include <vector>
 
+#define ASSERT(x) if (!(x)) __debugbreak();
+
+#define GLCall(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+static void GLClearError()
+{
+    while (glGetError() != GL_NO_ERROR);
+}
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+    while (GLenum error = glGetError())
+    {
+        std::cout << "[OpenGL ERROR] (" << error << "): " << function << " " << file << ":" << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
 struct ShaderProgramSource {
     std::string VertexSource;
     std::string FragmentSource;
@@ -119,6 +140,9 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    // Set the fps to match the refresh rate of the monitor (freesync)
+    glfwSwapInterval(1);
+
     if (glewInit() != GLEW_OK) {
         std::cout << "GLEW INIT ERROR!" << std::endl;
     }
@@ -183,6 +207,14 @@ int main(void)
 
     //**************************************************************************************//
 
+    // We have to get the uniform location from the already bound shader in order to assign it a value
+    int colorUniformLocation = glGetUniformLocation(shader, "u_Color");
+    // Setting the uniform value
+    glUniform4f(colorUniformLocation, 0.149f, 0.749f, 0.498f, 1.0);
+
+
+    float r = 0.0f;
+    float increment = 0.05f;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -194,9 +226,17 @@ int main(void)
         // Reference: https://docs.gl/gl4/glDrawArrays
         //glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        glUniform4f(colorUniformLocation, r, 0.749f, 0.498f, 1.0);
         // In order to use index array, we need to use glDrawElements insted of glDrawArrays
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
+        if (r > 1.0f)
+            increment = -0.05f;
+        else if (r < 0.0f)
+            increment = 0.05f;
+
+        r += increment;
+        
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
