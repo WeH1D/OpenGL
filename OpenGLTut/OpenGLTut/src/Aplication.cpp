@@ -128,6 +128,10 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -163,6 +167,11 @@ int main(void)
         2, 3, 0 // second triangle
     };
 
+    // Creating and binding a vertex array object to save the vertex buffer, index buffer data ...
+    unsigned int vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    
     // ++++++++++++++++++++ SUMMARY ON BUFFER BINDING ++++++++++++++++++++++++++++++++++++++++++++
     //
     // 1. The vertex buffer (buffer) needs to be bound before calling glVertexAttribPointer 
@@ -171,8 +180,7 @@ int main(void)
     //
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-    //=================================== CREATING A BUFFER =============================================================
+    //=================================== CREATING A VERTEX BUFFER =============================================================
     unsigned int buffer;
     // Create a vertexx buffer object (how many buffers, pointer to int where to save the id/name of the buffer)
     glGenBuffers(1, &buffer);
@@ -181,11 +189,11 @@ int main(void)
     // Now we can copy data to the buffer, it needs a size in bytes, data and usage pattern
     glBufferData(GL_ARRAY_BUFFER, 8  * sizeof(float), positions, GL_STATIC_DRAW);
   
-
+    // Reference: https://docs.gl/gl4/glVertexAttribPointer
+    // https://learnopengl.com/Getting-started/Hello-Triangle#:~:text=The%20function%20glVertexAttribPointer%20has%20quite%20a%20few%20parameters%20so%20let%27s%20carefully%20walk%20through%20them%3A
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     // In order for our gpu to understafnd the structure of our vertex data, we need to describe them
     glEnableVertexAttribArray(0);
-    // Reference: https://docs.gl/gl4/glVertexAttribPointer
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 
     //==================================== CREATING A INDEX BUFFER ============================================================
    // Binding the index buffer so it can be used 
@@ -195,7 +203,7 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indexBuffer, GL_STATIC_DRAW);
 
-    //================================================================================================
+    //==================================== CREATING SHADERS ============================================================
 
     
     // if we use a relative path to a file like this, its relative to the working directory of the project
@@ -203,9 +211,12 @@ int main(void)
     ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-    glUseProgram(shader);
 
     //**************************************************************************************//
+    // unbind everything now that we defined, bound and stored it in the VAO
+    glBindVertexArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // We have to get the uniform location from the already bound shader in order to assign it a value
     int colorUniformLocation = glGetUniformLocation(shader, "u_Color");
@@ -215,6 +226,10 @@ int main(void)
 
     float r = 0.0f;
     float increment = 0.05f;
+
+    // enable wireframe mode, use GL_FILL for regural mode
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -226,8 +241,15 @@ int main(void)
         // Reference: https://docs.gl/gl4/glDrawArrays
         //glDrawArrays(GL_TRIANGLES, 0, 6);
 
+
+        glUseProgram(shader);
         glUniform4f(colorUniformLocation, r, 0.749f, 0.498f, 1.0);
-        // In order to use index array, we need to use glDrawElements insted of glDrawArrays
+
+        // because we used the VAO to store the vertex and index buffers now we only need to bind
+        // the corresponding VAO and not the VBO/EBO as well
+        glBindVertexArray(vao);
+
+		// In order to use index array, we need to use glDrawElements insted of glDrawArrays
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
         if (r > 1.0f)
