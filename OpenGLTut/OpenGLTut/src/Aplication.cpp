@@ -6,6 +6,9 @@
 #include <sstream>
 #include <vector>
 
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+
 #define ASSERT(x) if (!(x)) __debugbreak();
 
 #define GLCall(x) GLClearError();\
@@ -181,13 +184,15 @@ int main(void)
     // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     //=================================== CREATING A VERTEX BUFFER =============================================================
-    unsigned int buffer;
-    // Create a vertexx buffer object (how many buffers, pointer to int where to save the id/name of the buffer)
-    glGenBuffers(1, &buffer);
-    // We need to make the buffer an active object in order to store data to it
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    // Now we can copy data to the buffer, it needs a size in bytes, data and usage pattern
-    glBufferData(GL_ARRAY_BUFFER, 8  * sizeof(float), positions, GL_STATIC_DRAW);
+    //unsigned int buffer;
+    //// Create a vertexx buffer object (how many buffers, pointer to int where to save the id/name of the buffer)
+    //glGenBuffers(1, &buffer);
+    //// We need to make the buffer an active object in order to store data to it
+    //glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    //// Now we can copy data to the buffer, it needs a size in bytes, data and usage pattern
+    //glBufferData(GL_ARRAY_BUFFER, 8  * sizeof(float), positions, GL_STATIC_DRAW);
+
+    VertexBuffer vb(positions, sizeof(float) * 8);
   
     // Reference: https://docs.gl/gl4/glVertexAttribPointer
     // https://learnopengl.com/Getting-started/Hello-Triangle#:~:text=The%20function%20glVertexAttribPointer%20has%20quite%20a%20few%20parameters%20so%20let%27s%20carefully%20walk%20through%20them%3A
@@ -196,12 +201,14 @@ int main(void)
     glEnableVertexAttribArray(0);
 
     //==================================== CREATING A INDEX BUFFER ============================================================
-   // Binding the index buffer so it can be used 
-    unsigned int iBuffer;
-    glGenBuffers(1, &iBuffer);
-    // A change here when compared to the vertex array buffer is the use of 'GL_ELEMENT_ARRAY_BUFFER'
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indexBuffer, GL_STATIC_DRAW);
+   //// Binding the index buffer so it can be used 
+   // unsigned int iBuffer;
+   // glGenBuffers(1, &iBuffer);
+   // // A change here when compared to the vertex array buffer is the use of 'GL_ELEMENT_ARRAY_BUFFER'
+   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBuffer);
+   // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indexBuffer, GL_STATIC_DRAW);
+
+    IndexBuffer ib(indexBuffer, 6);
 
     //==================================== CREATING SHADERS ============================================================
 
@@ -215,8 +222,8 @@ int main(void)
     //**************************************************************************************//
     // unbind everything now that we defined, bound and stored it in the VAO
     glBindVertexArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    vb.Unbind();
+    ib.Unbind();
 
     // We have to get the uniform location from the already bound shader in order to assign it a value
     int colorUniformLocation = glGetUniformLocation(shader, "u_Color");
