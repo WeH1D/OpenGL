@@ -50,21 +50,21 @@ int main(void)
          -0.5f, 0.5f, // 3
     };
 
-       unsigned int indexBuffer[] = {
+    unsigned int indexBuffer[] = {
         0, 1, 2, // first triangle
         2, 3, 0 // second triangle
     };
 
-    VertexArray va;
     
     VertexBuffer vb(positions, sizeof(float) * 8);
-    
-    IndexBuffer ib(indexBuffer, 6);
-
     VertexBufferLayout layout;
     // We create a definition of the attributes of our vertex buffer, 
     // in this case our vb only has a position attrib thats represented by 3 floats
     layout.Push<float>(2);
+    
+    IndexBuffer ib(indexBuffer, 6);
+    
+    VertexArray va;
     va.AddLayout(vb, ib, layout);
     
     
