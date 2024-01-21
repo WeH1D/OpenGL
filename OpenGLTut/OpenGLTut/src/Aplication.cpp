@@ -6,6 +6,8 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
+#include "VertexArray.h"
+#include "VertexBufferLayout.h"
 
 
 int main(void)
@@ -56,9 +58,11 @@ int main(void)
     };
 
     // Creating and binding a vertex array object to save the vertex buffer, index buffer data ...
-    unsigned int vao;
+/*    unsigned int vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+ */   
+    VertexArray va;
     
     // ++++++++++++++++++++ SUMMARY ON BUFFER BINDING ++++++++++++++++++++++++++++++++++++++++++++
     //
@@ -79,13 +83,7 @@ int main(void)
 
     VertexBuffer vb(positions, sizeof(float) * 8);
   
-    // Reference: https://docs.gl/gl4/glVertexAttribPointer
-    // https://learnopengl.com/Getting-started/Hello-Triangle#:~:text=The%20function%20glVertexAttribPointer%20has%20quite%20a%20few%20parameters%20so%20let%27s%20carefully%20walk%20through%20them%3A
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-    // In order for our gpu to understafnd the structure of our vertex data, we need to describe them
-    glEnableVertexAttribArray(0);
-
-    //==================================== CREATING A INDEX BUFFER ============================================================
+       //==================================== CREATING A INDEX BUFFER ============================================================
    //// Binding the index buffer so it can be used 
    // unsigned int iBuffer;
    // glGenBuffers(1, &iBuffer);
@@ -94,6 +92,18 @@ int main(void)
    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indexBuffer, GL_STATIC_DRAW);
 
     IndexBuffer ib(indexBuffer, 6);
+
+    VertexBufferLayout layout;
+    // We create a definition of the attributes of our vertex buffer, 
+    // in this case our vb only has a position attrib thats represented by 3 floats
+    layout.Push<float>(2);
+    va.AddLayout(vb, ib, layout);
+     // Reference: https://docs.gl/gl4/glVertexAttribPointer
+    // https://learnopengl.com/Getting-started/Hello-Triangle#:~:text=The%20function%20glVertexAttribPointer%20has%20quite%20a%20few%20parameters%20so%20let%27s%20carefully%20walk%20through%20them%3A
+    //glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    //// In order for our gpu to understafnd the structure of our vertex data, we need to describe them
+    //glEnableVertexAttribArray(0);
+
 
     //==================================== CREATING SHADERS ============================================================
 
@@ -107,7 +117,7 @@ int main(void)
 
     //**************************************************************************************//
     // unbind everything now that we defined, bound and stored it in the VAO
-    glBindVertexArray(0);
+    va.Unbind();
     vb.Unbind();
     ib.Unbind();
 
@@ -142,10 +152,11 @@ int main(void)
 
         // because we used the VAO to store the vertex and index buffers now we only need to bind
         // the corresponding VAO and not the VBO/EBO as well
-        glBindVertexArray(vao);
+        //glBindVertexArray(vao);
+        va.Bind();
 
 		// In order to use index array, we need to use glDrawElements insted of glDrawArrays
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         if (r > 1.0f)
             increment = -0.05f;
