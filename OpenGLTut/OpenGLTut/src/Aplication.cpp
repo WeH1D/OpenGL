@@ -1,127 +1,12 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <vector>
 
+#include "Renderer.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "Shader.h"
 
-#define ASSERT(x) if (!(x)) __debugbreak();
-
-#define GLCall(x) GLClearError();\
-    x;\
-    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
-
-static void GLClearError()
-{
-    while (glGetError() != GL_NO_ERROR);
-}
-
-static bool GLLogCall(const char* function, const char* file, int line)
-{
-    while (GLenum error = glGetError())
-    {
-        std::cout << "[OpenGL ERROR] (" << error << "): " << function << " " << file << ":" << line << std::endl;
-        return false;
-    }
-    return true;
-}
-
-struct ShaderProgramSource {
-    std::string VertexSource;
-    std::string FragmentSource;
-};
-
-static ShaderProgramSource ParseShader(const std::string& filepath) {
-    std::ifstream stream(filepath);
-
-    enum class ShaderType
-    {
-        NONE = -1, VERTEX = 0, FRAGMENT = 1
-    };
-
-    std::string line;
-    ShaderType shaderType = ShaderType::NONE;
-    std::stringstream stringStream[2];
-
-    // Loop through each line of the file
-    while (getline(stream, line)) {
-        // Every line in the file gets stored to either the vertex or fragment string
-        // which will be used as the source strings in our shaders
-        if (line.find("#shader") != std::string::npos) {
-            if (line.find("vertex") != std::string::npos)
-                shaderType = ShaderType::VERTEX;
-            if (line.find("fragment") != std::string::npos)
-                shaderType = ShaderType::FRAGMENT;
-        }
-        else {
-            stringStream[(int)shaderType] << line << "\n";
-        }
-    }
-
-    return { 
-        stringStream[(int)ShaderType::VERTEX].str(), 
-        stringStream[(int)ShaderType::FRAGMENT].str() 
-    };
-}
-
-static unsigned int CompileShader(unsigned int type, const std::string& source) {
-    // Creates a shader object
-    unsigned int shaderId = glCreateShader(type);
-
-    const char* src = source.c_str();
-    // Copies the source code provided to the shader, any source code prevously stored in the shader is removed
-    // It doesnt compile the source code, it simply copies it to the shader
-    glShaderSource(shaderId, 1, &src, nullptr);
-    // Actually compiles the source code strings that have been copied into the shader
-    // Any compilation states (success, error) will be stored in the shader objects state
-    glCompileShader(shaderId);
-
-    int shaderCompileStatus;
-    // Returns a parameter from the shader object (in this case, a compile status),
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &shaderCompileStatus);
-    if (shaderCompileStatus != GL_TRUE) {
-        int shaderLogLength;
-        glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &shaderLogLength);
-
-
-        char* message = (char*)alloca(shaderLogLength * sizeof(char));
-        // Returns the information log for a shader object
-        glGetShaderInfoLog(shaderId, shaderLogLength, &shaderLogLength, message);
-        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-        std::cout << message << std::endl;
-
-        glDeleteShader(shaderId);
-        return 0;
-    }
-
-    return shaderId;
-}
-
-static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
-    // Reference: https://open.gl/drawing
-
-    // Creates an empty program object
-    unsigned int program = glCreateProgram();
-
-    unsigned int vShader = CompileShader(GL_VERTEX_SHADER, vertexShader);
-    unsigned int fShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
-   
-    // Attaches actual shader object to the program
-    glAttachShader(program, vShader);
-    glAttachShader(program, fShader);
-
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    glDeleteShader(vShader);
-    glDeleteShader(fShader);
-
-    return program;
-}
 
 int main(void)
 {
@@ -215,9 +100,10 @@ int main(void)
     
     // if we use a relative path to a file like this, its relative to the working directory of the project
     // that can be seen under project -> settings -> debugging -> Working Directory
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
+   /* ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
 
-    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);*/
+    Shader shader("res/shaders/Basic.shader"); 
 
     //**************************************************************************************//
     // unbind everything now that we defined, bound and stored it in the VAO
@@ -225,11 +111,11 @@ int main(void)
     vb.Unbind();
     ib.Unbind();
 
-    // We have to get the uniform location from the already bound shader in order to assign it a value
-    int colorUniformLocation = glGetUniformLocation(shader, "u_Color");
-    // Setting the uniform value
-    glUniform4f(colorUniformLocation, 0.149f, 0.749f, 0.498f, 1.0);
-
+    //// We have to get the uniform location from the already bound shader in order to assign it a value
+    //int colorUniformLocation = glGetUniformLocation(shader, "u_Color");
+    //// Setting the uniform value
+    //glUniform4f(colorUniformLocation, 0.149f, 0.749f, 0.498f, 1.0);
+ 
 
     float r = 0.0f;
     float increment = 0.05f;
@@ -249,8 +135,10 @@ int main(void)
         //glDrawArrays(GL_TRIANGLES, 0, 6);
 
 
-        glUseProgram(shader);
-        glUniform4f(colorUniformLocation, r, 0.749f, 0.498f, 1.0);
+        //glUseProgram(shader);
+        //glUniform4f(colorUniformLocation, r, 0.749f, 0.498f, 1.0);
+        shader.Bind();
+        shader.SetUniform4f("u_Color", r, 0.749f, 0.498f, 1.0);
 
         // because we used the VAO to store the vertex and index buffers now we only need to bind
         // the corresponding VAO and not the VBO/EBO as well
