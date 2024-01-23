@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Renderer.h"
+#include "Utils.h"
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
@@ -82,21 +83,17 @@ int main(void)
     // enable wireframe mode, use GL_FILL for regural mode
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    Renderer renderer;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
 
+        renderer.Clear();
 
         shader.Bind();
         shader.SetUniform4f("u_Color", r, 0.749f, 0.498f, 1.0);
 
-        va.Bind();
-
-		// In order to use index array, we need to use glDrawElements insted of glDrawArrays
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        renderer.Draw(va, ib.getCount(), shader);
 
         if (r > 1.0f)
             increment = -0.05f;
