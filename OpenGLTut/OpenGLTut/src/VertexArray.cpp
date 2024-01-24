@@ -32,7 +32,7 @@ void VertexArray::AddLayout(VertexBuffer& vb, IndexBuffer& ib, VertexBufferLayou
 	for (unsigned int i = 0; i < elements.size();i++)
 	{
 		auto element = elements[i];
-		GLCall(glEnableVertexAttribArray(0));
+		GLCall(glEnableVertexAttribArray(i));
 		GLCall(glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.GetStride(), (void *)offset));
 		offset += element.count * VertexBufferLayoutElement::GetSizeOfType(element.type);
 	}

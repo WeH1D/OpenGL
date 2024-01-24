@@ -19,6 +19,7 @@ public:
     void Unbind() const;
 
     void SetUniform4f(const std::string& name, float v1, float v2, float v3, float v4) const;
+    void SetUniform2f(const std::string& name, float v0, float v1) const;
 private:
     ShaderProgramSource ParseShader(const std::string& filepath);
     static unsigned int CompileShader(unsigned int type, const std::string& source);

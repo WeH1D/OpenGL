@@ -33,6 +33,12 @@ void Shader::SetUniform4f(const std::string& name, float v0, float v1, float v2,
     GLCall(int location = glGetUniformLocation(_rendererID, name.c_str()));
     GLCall(glUniform4f(location, v0, v1, v2, v3));
 }
+
+void Shader::SetUniform2f(const std::string& name, float v0, float v1) const
+{
+    GLCall(int location = glGetUniformLocation(_rendererID, name.c_str()));
+    GLCall(glUniform2f(location, v0, v1));
+}
  
 
 ShaderProgramSource Shader::ParseShader(const std::string & filepath) {

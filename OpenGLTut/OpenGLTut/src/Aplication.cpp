@@ -9,6 +9,7 @@
 #include "Shader.h"
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
+#include "Texture.h"
 
 
 int main(void)
@@ -44,11 +45,12 @@ int main(void)
 
     std::cout << "GL VESRION: " << glGetString(GL_VERSION) << std::endl;
     
+    // pos.x, pos.y, texture.x, texture.y
     float positions[] = {
-        -0.5f, -0.5f, // 0
-         0.5f, -0.5f, // 1
-         0.5f,  0.5f, // 2
-         -0.5f, 0.5f, // 3
+        -0.5f, -0.5f, 0.0f, 0.0f, // 0 
+         0.5f, -0.5f, 1.0f, 0.0f, // 1
+         0.5f,  0.5f, 1.0f, 1.0f, // 2
+         -0.5f, 0.5f, 0.0f, 1.0f  // 3
     };
 
     unsigned int indexBuffer[] = {
@@ -57,10 +59,11 @@ int main(void)
     };
 
     
-    VertexBuffer vb(positions, sizeof(float) * 8);
+    VertexBuffer vb(positions, sizeof(float) * 16);
     VertexBufferLayout layout;
     // We create a definition of the attributes of our vertex buffer, 
     // in this case our vb only has a position attrib thats represented by 3 floats
+    layout.Push<float>(2);
     layout.Push<float>(2);
     
     IndexBuffer ib(indexBuffer, 6);
@@ -70,6 +73,8 @@ int main(void)
     
     
     Shader shader("res/shaders/Basic.shader"); 
+
+    Texture texture("./res/textures/brick_texture.jpeg", 1024, 1024, 3);
 
     va.Unbind();
     vb.Unbind();
@@ -87,11 +92,13 @@ int main(void)
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
-
+    {
         renderer.Clear();
 
         shader.Bind();
         shader.SetUniform4f("u_Color", r, 0.749f, 0.498f, 1.0);
+
+        texture.Bind();
 
         renderer.Draw(va, ib.getCount(), shader);
 
