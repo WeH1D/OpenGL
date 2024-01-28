@@ -1,7 +1,7 @@
 #include "Texture.h"
-#include "../res/lib/stb_image.h"
 #include "Utils.h"
 #include <iostream>
+#include "vendor/stb_image/stb_image.h"
 
 Texture::Texture(std::string src, int width, int height, int channels) : 
 	_rendererId(0), _fileSrc(src), _width(width), _height(height), _channels(channels)
