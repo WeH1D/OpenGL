@@ -19,6 +19,9 @@ int main(void)
 {
     GLFWwindow* window;
 
+	const int WINDOW_WIDTH = 1920;
+    const int WINDOW_HEIGHT= 1080;
+
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -29,7 +32,7 @@ int main(void)
 
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1024, 1024, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -77,6 +80,18 @@ int main(void)
         1, 0, 6  // bottom
     };
 
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f,  0.0f,  0.0f),
+        glm::vec3(2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f,  2.0f, -2.5f),
+        glm::vec3(1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
     
     VertexBuffer vb(positions, sizeof(float) * NUM_OF_POSITIONS);
     VertexBufferLayout layout;
@@ -100,7 +115,14 @@ int main(void)
     vb.Unbind();
     ib.Unbind();
 
-   
+
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH/(float)WINDOW_HEIGHT, 0.1f, 100.0f);
+    
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+
+    glm::mat4 viewMatrix= glm::mat4(1.0f);
+    viewMatrix = glm::translate(viewMatrix, glm::vec3(0.0f, 0.0f, -4.0f));
 
     float r = 0.0f;
     float increment = 0.05f;
@@ -119,20 +141,25 @@ int main(void)
 
         shader.Bind();
         shader.SetUniform4f("u_Color", r, 0.749f, 0.498f, 1.0);
-        
-        // Creates an identity matrix with a diagonal values of 1.0f
-        glm::mat4 transformationMatrix = glm::mat4(1.0f);
-        // Scales a provided matrix by a provided value in x, y and z axis
-        transformationMatrix = glm::scale(transformationMatrix, glm::vec3(0.5, 0.5, 0.5));
-        // Rotates a provided matrix by 90 deg on the z axis
-        transformationMatrix = glm::rotate(transformationMatrix, (float)glfwGetTime(), glm::vec3(0.0, 1.0, 0.0));
-        transformationMatrix = glm::rotate(transformationMatrix, glm::radians(20.0f), glm::vec3(1.0, 0.0, 0.0));
-
-        shader.SetUniformMatrix4fv("u_Transform", false, glm::value_ptr(transformationMatrix));
+        shader.SetUniformMatrix4fv("u_view", false, glm::value_ptr(viewMatrix));
+        shader.SetUniformMatrix4fv("u_projection", false, glm::value_ptr(projectionMatrix));
 
         texture.Bind();
 
-        renderer.Draw(va, ib.getCount(), shader);
+        for (int i = 0; i < 10; i++) {
+            // Creates an identity matrix with a diagonal values of 1.0f
+            glm::mat4 transformationMatrix = glm::mat4(1.0f);
+            transformationMatrix = glm::translate(transformationMatrix,cubePositions[i]);
+            // Scales a provided matrix by a provided value in x, y and z axis
+            transformationMatrix = glm::scale(transformationMatrix, glm::vec3(0.5, 0.5, 0.5));
+            // Rotates a provided matrix by 90 deg on the z axis
+            transformationMatrix = glm::rotate(transformationMatrix, (float)glfwGetTime(), cubePositions[i]);
+            
+            shader.SetUniformMatrix4fv("u_model", false, glm::value_ptr(transformationMatrix));
+            shader.SetUniformMatrix4fv("u_Transform", false, glm::value_ptr(transformationMatrix));
+
+            renderer.Draw(va, ib.getCount(), shader);
+        }
 
         if (r > 1.0f)
             increment = -0.05f;
