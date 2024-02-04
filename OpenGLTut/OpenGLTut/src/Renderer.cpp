@@ -9,12 +9,19 @@ Renderer::~Renderer()
 {
 }
 
-void Renderer::Draw(VertexArray& va, unsigned int elementCount, Shader& shader) const
+void Renderer::Draw(DrawMode mode, VertexArray& va, unsigned int count, Shader& shader) const
 {
 	va.Bind();
 	shader.Bind();
-
-	GLCall(glDrawElements(GL_TRIANGLES, elementCount, GL_UNSIGNED_INT, nullptr));
+	
+	if (mode == DrawMode::ELEMENTS) 
+	{
+		GLCall(glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr));
+	}
+	else if(mode == DrawMode::ARRAYS)
+	{
+		GLCall(glDrawArrays(GL_TRIANGLES, 0, count));
+	}
 }
 
 void Renderer::Clear() const

@@ -22,11 +22,14 @@ void VertexArray::Unbind() const
 	GLCall(glBindVertexArray(0));
 }
 
-void VertexArray::AddLayout(VertexBuffer& vb, IndexBuffer& ib, VertexBufferLayout& layout)
+void VertexArray::AddLayout(VertexBuffer& vb, VertexBufferLayout& layout, IndexBuffer* ib  )
 {
 	Bind();
 	vb.Bind();
-	ib.Bind();
+	if (ib)
+	{
+		ib->Bind();
+	}
 	const auto& elements = layout.GetElements();
 	unsigned int offset = 0;
 	for (unsigned int i = 0; i < elements.size();i++)

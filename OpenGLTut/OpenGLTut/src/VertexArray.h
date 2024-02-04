@@ -17,5 +17,5 @@ public:
 	void Unbind() const;
 
 
-	void AddLayout( VertexBuffer& vb, IndexBuffer& ib, VertexBufferLayout& layout);
+	void AddLayout( VertexBuffer& vb, VertexBufferLayout& layout, IndexBuffer* ib);
 };
