@@ -10,6 +10,7 @@
 #include "VertexArray.h"
 #include "VertexBufferLayout.h"
 #include "Texture.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,13 +20,25 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void processInput(GLFWwindow* window, Camera* camera, float deltaTime);
+
+bool cursor_enabled = false;
+
+GLFWwindow* window;
+
+const int WINDOW_WIDTH = 1920;
+const int WINDOW_HEIGHT = 1080;
+
+Renderer renderer;    
+Camera camera;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
 int main(void)
 {
-    GLFWwindow* window;
-
-    const int WINDOW_WIDTH = 1920;
-    const int WINDOW_HEIGHT = 1080;
-
+  
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -48,6 +61,8 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
+    
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Set the fps to match the refresh rate of the monitor (freesync)
     glfwSwapInterval(1);
@@ -58,6 +73,7 @@ int main(void)
 
     std::cout << "GL VESRION: " << glGetString(GL_VERSION) << std::endl;
 
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     // Setup Dear ImGui context
@@ -148,6 +164,7 @@ int main(void)
     float modelPositionValues[] = {0.0, 0.0, 0.0};
     float modelRotationValues[] = {0.0, 0.0, 0.0};
     float cameraPositionValues[] = { 0.0f, 0.0f, 0.0f };
+
     glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
     float cameraFOV = 45.0f;
 
@@ -155,14 +172,17 @@ int main(void)
     // enable wireframe mode, use GL_FILL for regural mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-
-    Renderer renderer;
-    
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         renderer.Clear();
         glEnable(GL_DEPTH_TEST);  
+
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        processInput(window, &camera, deltaTime);
         
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -175,11 +195,8 @@ int main(void)
         modelMatrix = glm::rotate(modelMatrix, glm::radians(modelRotationValues[1]), glm::vec3(0.0, 1.0, 0.0));
         modelMatrix = glm::rotate(modelMatrix, glm::radians(modelRotationValues[2]), glm::vec3(0.0, 0.0, 1.0));
         
-        glm::mat4 viewMatrix;
-        glm::vec3 cameraPos(cameraPositionValues[0], cameraPositionValues[1], cameraPositionValues[2]);
-        glm::vec3 cameraDirection(cameraPos[0], cameraPos[1], cameraPos[2] - 5);
-        viewMatrix = glm::lookAt(cameraPos, cameraDirection, worldUp);
-
+        glm::mat4 viewMatrix = camera.getCameraMatrix();
+      
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(cameraFOV), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
         shader.Bind();
@@ -228,3 +245,37 @@ int main(void)
 
     return 0;
 }
+
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+
+
+
+}
+
+void processInput(GLFWwindow* window, Camera* camera, float deltaTime) {
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL)) {
+        if (cursor_enabled) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            cursor_enabled = false;
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            cursor_enabled = true;
+        }
+    }
+    else {
+    }
+    if (glfwGetKey(window, GLFW_KEY_W)) {
+        camera->move(MovementDirection::FRONT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S)) {
+        camera->move(MovementDirection::BACK, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D)) {
+        camera->move(MovementDirection::RIGHT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A)) {
+        camera->move(MovementDirection::LEFT, deltaTime);
+    }
+};
